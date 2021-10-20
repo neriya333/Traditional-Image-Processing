@@ -16,8 +16,3 @@ def load_img(path, representation=2):
     if representation == GRAY_SCALE:
         img = skimage.color.rgb2gray(img)
     return img
-
-
-image_url = 'jerusalem.jpg'
-
-img = load_img(image_url, 1)
