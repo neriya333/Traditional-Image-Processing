@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 """ import scikit-image as skmg """
 import scipy as sp
 import imageio as imao
-import skimage
+from skimage import color
 
 GRAY_SCALE = 1
 
@@ -14,5 +14,5 @@ grad = np.tile(x,(256,1))
 def load_img(path, representation=2):
     img = imao.imread(path)
     if representation == GRAY_SCALE:
-        img = skimage.color.rgb2gray(img)
+        img = color.rgb2gray(img)
     return img
