@@ -50,12 +50,14 @@ def rgb2yiq(imRGB):
     :return: imYIQ: NxMx3 where 3 is YIQ
     """
     dim = imRGB.shape
+
+    if dim[-1] != 3: ValueError("Input array must have a shape == (..., 3)), "f"got {dim}")
+
     imYIQ = np.zeros(dim)
 
-    for i in range(3):
-        imYIQ[i] = imRGB[0] * RGB2YIQ_MATRIX[i][0] + \
-                   imRGB[1] * RGB2YIQ_MATRIX[i][1] + \
-                   imRGB[2] * RGB2YIQ_MATRIX[i][2]
+    for i in range(dim[0]):
+        for j in range(dim[1]):
+            imYIQ[i][j] = np.dot(RGB2YIQ_MATRIX, imRGB[i][j])
 
     return imYIQ
 
@@ -66,30 +68,52 @@ def yiq2rgb(imYIQ):
     :return: imRGB: NxMx3 where 3 is YIQ
     """
     dim = imYIQ.shape
+    if dim[-1] != 3: ValueError("Input array must have a shape == (..., 3)), "f"got {dim}")
+
     imRGB = np.zeros(dim)
     rev_RGB2YIQ_MATRIX = np.linalg.inv(RGB2YIQ_MATRIX)
 
-    for i in range(3):
-        imRGB[i] = imYIQ[0] * rev_RGB2YIQ_MATRIX[i][0] + \
-                   imYIQ[1] * rev_RGB2YIQ_MATRIX[i][1] + \
-                   imYIQ[2] * rev_RGB2YIQ_MATRIX[i][2]
+    for i in range(dim[0]):
+        for j in range(dim[1]):
+            imRGB[i][j] = np.dot(rev_RGB2YIQ_MATRIX, imYIQ[i][j])
 
     return imRGB
+
+
+# def histogram_equalization(im_orig):
+#     """
+#
+#     :param im_orig: grey scale or RGB normalized to [0,1]
+#     :return: [im_eq, hist_orig, hist_eq] where
+#               im_eq - is the equalized image. grayscale or RGB float64 image with values in [0, 1].
+#               hist_orig - is a 256 bin histogram of the original image (array with shape (256,) ).
+#               hist_eq - is a 256 bin histogram of the equalized image (array with shape (256,) )
+#     """
+#     # make YIQ to work Y with insteade of RGB
+#     if type(im_orig[0][0]) == tuple:
+#         img = rgb2yiq(im_orig)
+#
+#
+#
+#     # return [im_wq, hist_orgi, histogram_eq]
 
 
 
 """testing\playground field"""
 
-# x = np.hstack([np.repeat(np.arange(0, 50, 2), 10)[None, :], np.array([255] * 6)[None, :]])
-# grad = np.array([[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4], [6, 6, 6, 6]])
+# # x = np.hstack([np.repeat(np.arange(0, 50, 2), 10)[None, :], np.array([255] * 6)[None, :]])
+# grad = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3], [4, 4, 4], [6, 6, 6]])
 # gard3 = np.array([grad, grad * 10, grad * 20])/120
-#
-#
-# # img_url = 'jerusalem.jpg'
-# # imdisplay(img_url, 1)  # check q2 and 1 without wired cases
-#
-#
-# img = rgb2yiq(gard3)
-# img = yiq2rgb(img)
-# plt.imshow(img)
-# plt.show()
+# #
+# #
+# img_url = 'jerusalem.jpg'
+# jer = read_image(img_url)  # check q2 and 1 without wired cases
+# #
+# #
+# # img = rgb2yiq(jer)
+# # img2 = color.rgb2yiq(jer)
+# # check = img2-img
+
+
+
+print("here")
