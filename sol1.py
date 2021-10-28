@@ -130,8 +130,14 @@ def histogram_equalization(im_orig):
 
 
 def apply_colormaping_to_img(colormap, img255):
+    """
+
+    :param colormap:
+    :param img255: [0,255] MxN img (Y or greyscale)
+    :return:
+    """
     dim = img255.shape
-    equalized_img = (colormap[img255.flatten()] / (COLOR_RANGE - 1)).reshape(*dim)
+    equalized_img = (colormap[(np.int64(img255)).flatten()] / (COLOR_RANGE - 1)).reshape(*dim)
     return equalized_img
 
 
@@ -171,7 +177,6 @@ def quantize(im_orig, n_quant, n_iter):
 
     # place z
     z_ = split_z_evenly_by_distribution_of_colors(hist, n_quant)
-    z_[0], z_[-1] = 0, COLOR_RANGE
 
     # place p
     q_loc = np.zeros(n_quant)
@@ -200,7 +205,7 @@ def quantize(im_orig, n_quant, n_iter):
     for i in range(n_quant):
         colormap[z_[i]:z_[i+1]] = q_loc[i]
 
-    img = apply_colormaping_to_img(colormap, img)
+    img = apply_colormaping_to_img(colormap * COLOR_RANGE, img)
 
     if img_converted_to_YIQ_flag:
         img = retun_to_RGB_format(YIQ, img)
@@ -228,3 +233,9 @@ def create_Id_vec_minos_p__vec_per_interval_Zi_to_Zi_plus1(length_arr, q_loc, z_
         length_arr[z_[i]:z_[i+1]] -= np.int32(q_loc[i])
     length_arr[-1] -= q_loc[-1]
     return length_arr
+
+
+x = np.hstack([np.repeat(np.arange(0,50,2),10)[None,:], np.array([255]*6)[None,:]])
+grad = np.tile(x,(256,1))
+here = quantize(grad/255,4,10)
+print('here')
