@@ -159,7 +159,6 @@ def img_to_grey_or_yiq(im_orig):
 
 def quantize(im_orig, n_quant, n_iter):
     """
-
     :param im_orig: - is the input grayscale or RGB image to be quantized (float64 image with values in [0, 1])
     :param n_quant: - is the number of intensities your output im_quant image should have.
     :param n_iter:r - is the maximum number of iterations of the optimization procedure (may converge earlier.)
@@ -168,7 +167,6 @@ def quantize(im_orig, n_quant, n_iter):
     """
 
     YIQ, img, img_converted_to_YIQ_flag = img_to_grey_or_yiq(im_orig)
-
     hist = np.histogram(img, bins=COLOR_RANGE)
 
     # place z
