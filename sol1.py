@@ -96,31 +96,31 @@ def histogram_equalization(im_orig):
 
     # make YIQ to work Y with instade of RGB
     img = 0
+    img_converted_to_YIQ_flag = False
     if type(im_orig[0][0]) == tuple:
         img = rgb2yiq(im_orig)
+        img_converted_to_YIQ_flag = True
     else:
         img = im_orig
 
     # prepare img
-    img255 = np.round(img * 255)
+    img255 = np.int64(np.round(img * 255))
 
     # calc histogram and cumulative
-    hist = np.histogram(img255, bins=range(COLOR_RANGE + 1))
-    cumulative = np.cumsum(hist[0])
+    hist_orig = np.histogram(img255, bins=range(COLOR_RANGE + 1))
+    cumulative = np.cumsum(hist_orig[0])
 
     # Edge case - empty img
     if cumulative[-1] == 0:
         return [im_orig, im_orig, im_orig]
 
-    # find location of first color volume that is not zero
-    first_col = np.nonzero(hist[0])[0][0]
-    if len(np.nonzero(hist[0])[0]) == 1:
+    # (else) find location of first color volume that is not zero
+    first_col = np.nonzero(hist_orig[0])[0][0]
+    if len(np.nonzero(hist_orig[0])[0]) == 1:  # if there is only one volume of color, return it as is
         return [im_orig, im_orig, im_orig]
 
-        # if 1 - there is only one col,
-        # (cumulative[COLOR_RANGE-1]-cumulative[first_col]) = div by 0
     colormap = np.round((COLOR_RANGE - 1) * (cumulative - cumulative[first_col]) / (
-                  cumulative[COLOR_RANGE - 1] - cumulative[first_col]))
+            cumulative[COLOR_RANGE - 1] - cumulative[first_col]))
 
     """ to further understand how the image looks:
     # plot the histogram
@@ -132,11 +132,17 @@ def histogram_equalization(im_orig):
     plt.show()
     """
 
+    # find shape of img, use colormap to transform the flatten img then normalize the img and rebuild it to its dim
+    dim = img.shape
+    equalized_img = (colormap[img255.flatten()] / (COLOR_RANGE-1)) .reshape(*dim)
 
-    new_img = np.zeros(COLOR_RANGE)
-    # TODO
+    new_hist = np.histogram(equalized_img * 255, bins=range(COLOR_RANGE + 1))
 
-    # return [im_wq, hist_orgi, histogram_eq]
+    # convert back to RGB
+    if img_converted_to_YIQ_flag:
+        equalized_img = yiq2rgb(equalized_img)
+
+    return [equalized_img, hist_orig[0], new_hist[0]]
 
 
 """testing\playground field"""
@@ -147,9 +153,9 @@ grad = np.tile(x, (256, 1))  # gard3 = np.array([grad, grad * 10, grad * 20])/12
 # #
 # img_url = 'jerusalem.jpg'
 # jer = read_image(img_url)  # check q2 and 1 without wired cases
-
-plt.imshow(grad)
-plt.show()
+#
+# plt.imshow(grad)
+# plt.show()
 
 histogram_equalization(grad / 255)
 print("here")
