@@ -16,8 +16,6 @@ RGB2YIQ_MATRIX = np.array([[0.299, 0.587, 0.114],
 """load color image and convert to grayScale if representaion is 1 """
 
 """Q1"""
-
-
 def read_image(path, representation=2):
     img = imao.imread(path)
     if representation == GRAY_SCALE:
@@ -28,8 +26,6 @@ def read_image(path, representation=2):
 
 
 """Q2"""
-
-
 def imdisplay(path, rerepresentation=2):
     img = read_image(path, rerepresentation)
     # img = -1*(1 - img)  # convert the image
@@ -39,10 +35,7 @@ def imdisplay(path, rerepresentation=2):
         plt.imshow(img)
     plt.show()
 
-
 """Q3"""
-
-
 # given NxMx3 for RGB return YIQ - not optimized.
 def rgb2yiq(imRGB):
     """
@@ -62,7 +55,7 @@ def rgb2yiq(imRGB):
 
     return np.stack((Y, I, Q), axis=-1)
 
-
+# the other way around
 def yiq2rgb(imYIQ):
     """
     :param imYIQ: NxMx3 where 3 is YIQ, with values in[-1,1]
@@ -83,10 +76,10 @@ def yiq2rgb(imYIQ):
 
     return np.stack((R, G, B), axis=-1)
 
-
+"""Q3"""
 def histogram_equalization(im_orig):
     """
-
+    Apply the histogram_equalization
     :param im_orig: grey scale or RGB normalized to [0,1]
     :return: [im_eq, hist_orig, hist_eq] where
               im_eq - is the equalized image. grayscale or RGB float64 image with values in [0, 1].
@@ -132,9 +125,10 @@ def histogram_equalization(im_orig):
 def apply_colormaping_to_img(colormap, img255):
     """
 
-    :param colormap:
+    :param colormap: array range[0:255] of float64 (or ints) in [0:255]
     :param img255: [0,255] MxN img (Y or greyscale)
-    :return:
+    :return:img with dims of img255, each pixel in [0,1] where each img[x]=colormap[x]=y (move volume of 34 to what is
+    in cell 34 of colormap)
     """
     dim = img255.shape
     equalized_img = (colormap[(np.int64(img255)).flatten()] / (COLOR_RANGE - 1)).reshape(*dim)
@@ -165,11 +159,14 @@ def img_to_grey_or_yiq(im_orig):
 
 def quantize(im_orig, n_quant, n_iter):
     """
+
     :param im_orig: - is the input grayscale or RGB image to be quantized (float64 image with values in [0, 1])
     :param n_quant: - is the number of intensities your output im_quant image should have.
     :param n_iter:r - is the maximum number of iterations of the optimization procedure (may converge earlier.)
 
-    :return:
+    :return: [igm, err] where
+            img - dimg(im_orig) typeof np.float ,the img after quantization activated on it
+            err - array length n_iter, the error of each iteration
     """
 
     YIQ, img, img_converted_to_YIQ_flag = img_to_grey_or_yiq(im_orig)
@@ -193,19 +190,20 @@ def quantize(im_orig, n_quant, n_iter):
             q_loc[i] = np.round(numerator / np.sum(hist[0][z_[i]:z_[i + 1]]))
 
         for i in range(1, n_quant, 1):
-            z_[i] = round((q_loc[i-1] + q_loc[i])/2)
+            z_[i] = round((q_loc[i - 1] + q_loc[i]) / 2)
 
         # err = sum of (delta(p_i),base_volume)^2 * num_pix_this_volume.
         # here we made a vector multiplication using (volume_VEC-p_i)^2 * hist
         q_vec = create_Id_vec_minos_p__vec_per_interval_Zi_to_Zi_plus1(np.array(range(COLOR_RANGE)), q_loc, z_)
-        error_iter[j] += np.dot(q_vec**2, hist[0])
+        error_iter[j] += np.dot(q_vec ** 2, hist[0])
 
     # make 255 colormap
     colormap = np.zeros(COLOR_RANGE)
     for i in range(n_quant):
-        colormap[z_[i]:z_[i+1]] = q_loc[i]
+        colormap[z_[i]:z_[i + 1]] = q_loc[i]
+    colormap[-1] = colormap[-2]
 
-    img = apply_colormaping_to_img(colormap * COLOR_RANGE, img)
+    img = apply_colormaping_to_img(colormap, img * (COLOR_RANGE - 1))
 
     if img_converted_to_YIQ_flag:
         img = retun_to_RGB_format(YIQ, img)
@@ -230,12 +228,37 @@ def create_Id_vec_minos_p__vec_per_interval_Zi_to_Zi_plus1(length_arr, q_loc, z_
     """help compute vec with values :[0..255] minus q_i per interval [z[i], z_[i+1]].
     use to compute Error value"""
     for i in range(len(q_loc)):
-        length_arr[z_[i]:z_[i+1]] -= np.int32(q_loc[i])
+        length_arr[z_[i]:z_[i + 1]] -= np.int32(q_loc[i])
     length_arr[-1] -= q_loc[-1]
     return length_arr
 
 
-x = np.hstack([np.repeat(np.arange(0,50,2),10)[None,:], np.array([255]*6)[None,:]])
-grad = np.tile(x,(256,1))
-here = quantize(grad/255,4,10)
-print('here')
+x = np.hstack([(np.arange(0, 255, 1))[None, :], np.array([255] * 6)[None, :]])
+grad = np.tile(x, (256, 1))
+
+# imdisplay('jerusalem.jpg')
+# img = read_image('jerusalem.jpg')
+#
+# # plt.imshow(grad / 255)
+# # plt.show()
+#
+# here = quantize(img, 2, 100)
+# plt.imshow(here[0])
+# plt.show()
+
+
+imdisplay(r'externals\presubmit_externals\low_contrast.jpg')
+# img = read_image(r'externals\presubmit_externals\low_contrast.jpg')
+img = read_image('jerusalem.jpg')
+# plt.imshow(grad / 255)
+# plt.show()
+# img2 = histogram_equalization(img)
+# plt.imshow(img2[0])
+# plt.show()
+
+
+here = quantize(img, 15, 100)
+# plt.imshow(here[0])
+# plt.show()
+
+print(here[1])
