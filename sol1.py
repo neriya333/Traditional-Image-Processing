@@ -16,18 +16,32 @@ RGB2YIQ_MATRIX = np.array([[0.299, 0.587, 0.114],
 """load color image and convert to grayScale if representaion is 1 """
 
 """Q1"""
-def read_image(path, representation=2):
-    img = imao.imread(path)
+def read_image(filename, representation=2):
+    """
+    :param filename: the filename of an image on disk (could be grayscale or RGB).
+    :param representation: representation code, either 1 or 2 defining whether the output should be a grayscale
+                image (1) or an RGB image (2)
+    :return: This function returns an image, make sure the output image is represented by a matrix of type
+             np.float64 with intensities (either grayscale or RGB channel intensities) normalized to the range [0, 1].
+    """
+    img = imao.imread(filename)
     if representation == GRAY_SCALE:
         img = color.rgb2gray(img)
     else:
         img = img / COLOR_RANGE
-    return img
+    return np.float64(img)
 
 
 """Q2"""
-def imdisplay(path, rerepresentation=2):
-    img = read_image(path, rerepresentation)
+def imdisplay(filename, rerepresentation=2):
+    """
+    This function to utilize read_image to display an image in a given representation. The function interface is:
+    where filename and representation are the same as those defined in read_image’s interface. T
+    :param filename:
+    :param rerepresentation:
+    :return:
+    """
+    img = read_image(filename, rerepresentation)
     # img = -1*(1 - img)  # convert the image
     if rerepresentation == GRAY_SCALE:
         plt.imshow(img, 'Greys')
@@ -87,11 +101,10 @@ def histogram_equalization(im_orig):
               hist_eq - is a 256 bin histogram of the equalized image (array with shape (256,) )
     """
 
-    # make YIQ to work Y with instade of RGB
+    # make YIQ (to work on Y as greyscale) instead of RGB
     YIQ, img, img_converted_to_YIQ_flag = img_to_grey_or_yiq(im_orig)
 
-    # prepare img
-
+    # working on [0,255] img
     img255 = np.int64(np.floor(img * (COLOR_RANGE - 1)))
 
     # calc histogram and cumulative
@@ -104,13 +117,13 @@ def histogram_equalization(im_orig):
 
     # (else) find location of first color volume that is not zero
     first_col = np.nonzero(hist_orig[0])[0][0]
-    if len(np.nonzero(hist_orig[0])[0]) == 1:  # if there is only one volume of color, return it as is
+    if len(np.nonzero(hist_orig[0])[0]) == 1:  # Edge case - There is only one volume of color
         return [im_orig, im_orig, im_orig]
 
     colormap = np.round((COLOR_RANGE - 1) * (cumulative - cumulative[first_col]) / (
             cumulative[COLOR_RANGE - 1] - cumulative[first_col]))
 
-    # find shape of img, use colormap to transform the flatten img then normalize the img and rebuild it to its dim
+    # Use colormap to transform the img.
     equalized_img = apply_colormaping_to_img(colormap, img255)
 
     new_hist = np.histogram(equalized_img * (COLOR_RANGE - 1), bins=range(COLOR_RANGE + 1))
@@ -233,32 +246,10 @@ def create_Id_vec_minos_p__vec_per_interval_Zi_to_Zi_plus1(length_arr, q_loc, z_
     return length_arr
 
 
-x = np.hstack([(np.arange(0, 255, 1))[None, :], np.array([255] * 6)[None, :]])
-grad = np.tile(x, (256, 1))
+x = np.hstack([np.repeat(np.arange(0,50,2),10)[None,:], np.array([255]*6)[None,:]])
+grad = np.tile(x,(256,1))
 
-# imdisplay('jerusalem.jpg')
-# img = read_image('jerusalem.jpg')
-#
-# # plt.imshow(grad / 255)
-# # plt.show()
-#
-# here = quantize(img, 2, 100)
-# plt.imshow(here[0])
-# plt.show()
+res = histogram_equalization(grad/COLOR_RANGE)[0]
 
-
-imdisplay(r'externals\presubmit_externals\low_contrast.jpg')
-# img = read_image(r'externals\presubmit_externals\low_contrast.jpg')
-img = read_image('jerusalem.jpg')
-# plt.imshow(grad / 255)
-# plt.show()
-# img2 = histogram_equalization(img)
-# plt.imshow(img2[0])
-# plt.show()
-
-
-here = quantize(img, 15, 100)
-# plt.imshow(here[0])
-# plt.show()
-
-print(here[1])
+plt.imshow(res, cmap='Greys')
+plt.show()
