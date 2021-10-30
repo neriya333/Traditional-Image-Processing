@@ -246,10 +246,10 @@ def create_Id_vec_minos_p__vec_per_interval_Zi_to_Zi_plus1(length_arr, q_loc, z_
     return length_arr
 
 
-x = np.hstack([np.repeat(np.arange(0,50,2),10)[None,:], np.array([255]*6)[None,:]])
-grad = np.tile(x,(256,1))
-
-res = histogram_equalization(grad/COLOR_RANGE)[0]
-
-plt.imshow(res, cmap='Greys')
-plt.show()
+# x = np.hstack([np.repeat(np.arange(0,50,2),10)[None,:], np.array([255]*6)[None,:]])
+# grad = np.tile(x,(256,1))
+#
+# res = histogram_equalization(grad/COLOR_RANGE)[0]
+#
+# plt.imshow(res, cmap='Greys')
+# plt.show()
