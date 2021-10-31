@@ -1,13 +1,19 @@
+# Created By  : Neriya Aa'aron cohen
+# Created Date: 31/10/2021
+# version ='1.0'
+# ------------------------------------------------ #
+# methods: read_img - read img from filename
+#          imgdisplay -
+#
+#
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 """ import scikit-image as skmg """
-import scipy as sp
 import imageio as imao
 from skimage import color
-
-GRAY_SCALE = 1
-COLOR_RANGE = 256
 
 RGB2YIQ_MATRIX = np.array([[0.299, 0.587, 0.114],
                            [0.596, -0.275, -0.321],
@@ -25,10 +31,10 @@ def read_image(filename, representation=2):
              np.float64 with intensities (either grayscale or RGB channel intensities) normalized to the range [0, 1].
     """
     img = imao.imread(filename)
-    if representation == GRAY_SCALE:
+    if representation == 1:
         img = color.rgb2gray(img)
     else:
-        img = img / COLOR_RANGE
+        img = img / 256
     return np.float64(img)
 
 
@@ -43,10 +49,10 @@ def imdisplay(filename, rerepresentation=2):
     """
     img = read_image(filename, rerepresentation)
     # img = -1*(1 - img)  # convert the image
-    if rerepresentation == GRAY_SCALE:
-        plt.imshow(img, 'Greys')
+    if rerepresentation == 1:
+        plt.imshow(img, 'gray')
     else:
-        plt.imshow(img)
+        plt.imshow(img, 'rgb')
     plt.show()
 
 """Q3"""
@@ -105,10 +111,10 @@ def histogram_equalization(im_orig):
     YIQ, img, img_converted_to_YIQ_flag = img_to_grey_or_yiq(im_orig)
 
     # working on [0,255] img
-    img255 = np.int64(np.floor(img * (COLOR_RANGE - 1)))
+    img255 = np.int64(np.floor(img * 255))
 
     # calc histogram and cumulative
-    hist_orig = np.histogram(img255, bins=range(COLOR_RANGE + 1))
+    hist_orig = np.histogram(img255, bins=range(257))
     cumulative = np.cumsum(hist_orig[0])
 
     # Edge case - empty img
@@ -120,13 +126,13 @@ def histogram_equalization(im_orig):
     if len(np.nonzero(hist_orig[0])[0]) == 1:  # Edge case - There is only one volume of color
         return [im_orig, im_orig, im_orig]
 
-    colormap = np.round((COLOR_RANGE - 1) * (cumulative - cumulative[first_col]) / (
-            cumulative[COLOR_RANGE - 1] - cumulative[first_col]))
+    colormap = np.round(255 * (cumulative - cumulative[first_col]) / (
+            cumulative[255] - cumulative[first_col]))
 
     # Use colormap to transform the img.
     equalized_img = apply_colormaping_to_img(colormap, img255)
 
-    new_hist = np.histogram(equalized_img * (COLOR_RANGE - 1), bins=range(COLOR_RANGE + 1))
+    new_hist = np.histogram(equalized_img * 255, bins=range(257))
 
     # convert back to RGB
     if img_converted_to_YIQ_flag:
@@ -144,7 +150,7 @@ def apply_colormaping_to_img(colormap, img255):
     in cell 34 of colormap)
     """
     dim = img255.shape
-    equalized_img = (colormap[(np.int64(img255)).flatten()] / (COLOR_RANGE - 1)).reshape(*dim)
+    equalized_img = (colormap[(np.int64(img255)).flatten()] / 255).reshape(*dim)
     return equalized_img
 
 
@@ -183,9 +189,12 @@ def quantize(im_orig, n_quant, n_iter):
     """
 
     YIQ, img, img_converted_to_YIQ_flag = img_to_grey_or_yiq(im_orig)
-    hist = np.histogram(img, bins=COLOR_RANGE)
+    hist = np.histogram(img, bins=256)
 
-    # place z
+    if n_quant == 0:
+        raise ValueError("n_quant value must be > 0, received 0")
+
+        # place z
     z_ = split_z_evenly_by_distribution_of_colors(hist, n_quant)
 
     # place p
@@ -194,7 +203,7 @@ def quantize(im_orig, n_quant, n_iter):
         q_loc[i] = round((z_[i] + z_[i + 1]) / 2)
 
     error_iter = np.zeros(n_iter)
-    length_arr = np.array(range(COLOR_RANGE))
+    length_arr = np.array(range(256))
 
     # iter over q, z and cal the err
     for j in range(n_iter):
@@ -207,16 +216,16 @@ def quantize(im_orig, n_quant, n_iter):
 
         # err = sum of (delta(p_i),base_volume)^2 * num_pix_this_volume.
         # here we made a vector multiplication using (volume_VEC-p_i)^2 * hist
-        q_vec = create_Id_vec_minos_p__vec_per_interval_Zi_to_Zi_plus1(np.array(range(COLOR_RANGE)), q_loc, z_)
+        q_vec = create_Id_vec_minos_p__vec_per_interval_Zi_to_Zi_plus1(np.array(range(256)), q_loc, z_)
         error_iter[j] += np.dot(q_vec ** 2, hist[0])
 
     # make 255 colormap
-    colormap = np.zeros(COLOR_RANGE)
+    colormap = np.zeros(256)
     for i in range(n_quant):
         colormap[z_[i]:z_[i + 1]] = q_loc[i]
-    colormap[-1] = colormap[-2]
+    colormap[-1] = colormap[-2]  # as z[:x] doesnt include x
 
-    img = apply_colormaping_to_img(colormap, img * (COLOR_RANGE - 1))
+    img = apply_colormaping_to_img(colormap, img * 255)
 
     if img_converted_to_YIQ_flag:
         img = retun_to_RGB_format(YIQ, img)
@@ -244,12 +253,3 @@ def create_Id_vec_minos_p__vec_per_interval_Zi_to_Zi_plus1(length_arr, q_loc, z_
         length_arr[z_[i]:z_[i + 1]] -= np.int32(q_loc[i])
     length_arr[-1] -= q_loc[-1]
     return length_arr
-
-
-# x = np.hstack([np.repeat(np.arange(0,50,2),10)[None,:], np.array([255]*6)[None,:]])
-# grad = np.tile(x,(256,1))
-#
-# res = histogram_equalization(grad/COLOR_RANGE)[0]
-#
-# plt.imshow(res, cmap='Greys')
-# plt.show()
