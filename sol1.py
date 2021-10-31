@@ -207,9 +207,16 @@ def quantize(im_orig, n_quant, n_iter):
 
     # iter over q, z and cal the err
     for j in range(n_iter):
+        change = False
         for i, q in enumerate(q_loc):
             numerator = np.dot(hist[0][z_[i]:z_[i + 1]], length_arr[z_[i]:z_[i + 1]])  # takes this part of the vector
-            q_loc[i] = np.round(numerator / np.sum(hist[0][z_[i]:z_[i + 1]]))
+            if q_loc[i] != np.round(numerator / np.sum(hist[0][z_[i]:z_[i + 1]])):
+                q_loc[i] = np.round(numerator / np.sum(hist[0][z_[i]:z_[i + 1]]))
+                change = True
+
+        if not change:
+            error_iter = np.delete(error_iter,np.s_[j:])
+            break
 
         for i in range(1, n_quant, 1):
             z_[i] = round((q_loc[i - 1] + q_loc[i]) / 2)
