@@ -97,7 +97,7 @@ def yiq2rgb(imYIQ):
     return np.stack((R, G, B), axis=-1)
 
 """Q3"""
-def histogram_equalization(im_orig):
+def histogram_equalize(im_orig):
     """
     Apply the histogram_equalization
     :param im_orig: grey scale or RGB normalized to [0,1]
