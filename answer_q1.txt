@@ -1,0 +1,2 @@
+by the equation that calculates q there is division by the sum of the histogram in range z,z+1, and this will result in zero div err if 
+a division will have a gray level segment with no pixels.
