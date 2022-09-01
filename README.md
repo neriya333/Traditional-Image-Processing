@@ -1,1 +1,2 @@
-sol1.py - Quantizeing and Histogram equalization.\n sol2.py - 
+sol1.py - Quantizeing and Histogram equalization. <br />
+sol2.py - 
