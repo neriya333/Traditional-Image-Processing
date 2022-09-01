@@ -1,4 +1,2 @@
-neriya333
-
-answer_q1.txt
-sol1.py
+sol1.py - Quantizeing and Histogram equalization.
+sol2.py - 
