@@ -639,4 +639,4 @@ if __name__ == '__main__':
     # print(rand_point1)
     # print(rand_point2)
     # print('Returned tuple of arrays :', result)
-    # print('List of Indices of maximum element :', result[0])
+    # print('List of Indices of maximum element :', result[0]) 
